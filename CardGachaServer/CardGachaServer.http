@@ -1,0 +1,6 @@
+@CardGachaServer_HostAddress = http://localhost:5005
+
+GET {{CardGachaServer_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
