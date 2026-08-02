@@ -7,8 +7,8 @@ EXPOSE 8081
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
-COPY . ./
-RUN dotnet restore "./CardGachaServer.csproj"
+COPY ["CardGachaServer/CardGachaServer.csproj","CardGachaServer/"]
+RUN dotnet restore "CardGachaServer/CardGachaServer.csproj"
 COPY . .
 WORKDIR "/src/CardGachaServer"
 RUN dotnet build "./CardGachaServer.csproj" -c $BUILD_CONFIGURATION -o /app/build
