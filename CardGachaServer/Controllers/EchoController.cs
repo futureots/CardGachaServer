@@ -10,7 +10,10 @@ public class EchoController : ControllerBase
     public Task<IActionResult> Echo([FromBody] EchoData data)
     {
         return Task.FromResult<IActionResult>(Ok(data));
-    } 
+    }
+
+
+    
 }
 
 public record EchoData(string Message);
