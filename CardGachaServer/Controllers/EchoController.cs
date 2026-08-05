@@ -11,9 +11,6 @@ public class EchoController : ControllerBase
     {
         return Task.FromResult<IActionResult>(Ok(data));
     }
-
-
-    
 }
 
 public record EchoData(string Message);

@@ -1,0 +1,34 @@
+services:
+    controller:
+        image: gachaserver:latest
+        container_name: gacha_server
+        build:
+            context: .
+            dockerfile: CardGachaServer/Dockerfile
+        ports:
+            - "3000:8080"
+        environment:
+            - ASPNETCORE_ENVIRONMENT=Development
+            - ConnectionStrings__DefaultConnection=Host=database;Port=5432;Database=${DB_NAME};Username=${DB_USER};Password=${DB_PASSWORD};
+        depends_on:
+            database:
+                condition: service_healthy
+    database:
+        image: postgres:latest
+        container_name: database
+        environment:
+            POSTGRES_USER: ${DB_USER}
+            POSTGRES_PASSWORD: ${DB_PASSWORD}
+            POSTGRES_DB: ${DB_NAME}
+        ports:
+            - "5432:5432"
+        volumes:
+            - db-data:/var/lib/postgresql
+        healthcheck:
+            test: [ "CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}" ]
+            interval: 5s
+            timeout: 5s
+            retries: 5
+
+volumes:
+    db-data:
