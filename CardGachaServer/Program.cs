@@ -20,7 +20,7 @@ using (var scope = app.Services.CreateScope())
     var database =scope.ServiceProvider.GetService<ApplicationDbContext>();
 
     // db 구조가 변경될때만 실행
-    //database?.Database.EnsureDeleted();
+    database?.Database.EnsureDeleted();
     database?.Database.EnsureCreated();
     // 나중에 1차적으로 완료되면 migration 만들어서 사용하기
     //database?.Database.Migrate();

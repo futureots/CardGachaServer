@@ -19,10 +19,6 @@ public class ItemPoolRelation
     public Pool? Pool{get; set;}
     public string PoolId { get; set; } = string.Empty;
     
-    /// <summary>
-    /// 해당 풀에서 해당 아이템의 픽업 여부
-    /// </summary>
-    public bool IsFeatured{get; set;}
     
     
     

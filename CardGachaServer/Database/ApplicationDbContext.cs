@@ -16,19 +16,29 @@ public class ApplicationDbContext : DbContext
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        modelBuilder.Entity<Item>()
-            .HasKey(i => i.Id);
+        modelBuilder.Entity<Item>(entity =>
+        {
+            entity.HasKey(i => i.Id);
+            
+            entity.HasOne(i => i.Probability)
+                .WithMany()
+                .HasForeignKey(i => i.Rarity)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+            
         modelBuilder.Entity<ItemPoolRelation>(entity =>
         {
             entity.HasKey(r => r.Id);
-            
+
             entity.HasOne(r => r.Pool)
                 .WithMany()
-                .HasForeignKey(r => r.PoolId);
-            
+                .HasForeignKey(r => r.PoolId)
+                .OnDelete(DeleteBehavior.Cascade);
+
             entity.HasOne(r => r.Item)
                 .WithMany()
-                .HasForeignKey(r => r.ItemId);
+                .HasForeignKey(r => r.ItemId)
+                .OnDelete(DeleteBehavior.Cascade);
 
             entity.HasIndex(r => new { r.PoolId, r.ItemId }).IsUnique();
 

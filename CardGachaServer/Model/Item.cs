@@ -16,8 +16,7 @@ public class Item
     /// 아이템 희귀도
     /// </summary>
     public int Rarity{get; set;}
-    
 
-    
-    
+    public Probability? Probability{get; set;}
+
 }
