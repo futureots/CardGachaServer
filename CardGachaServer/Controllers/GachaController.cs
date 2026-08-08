@@ -15,69 +15,24 @@ public class GachaController : ControllerBase
     {
         _context = context;
     }
-    
-    // TODO : 나중에 db에서 id를 사용해서 해당 테이블 불러오는 방식 사용
-    private List<(int, string)> _itemTable =
-    [
-        (3, "ball"),
-        (7, "tissue")
-    ];
-    
-    [HttpGet("{poolId}")]
-    public async Task<IActionResult> GetItemTable(string poolId)
+
+    [HttpPost]
+    public async Task<IActionResult> Gacha([FromBody] GachaData gachaData)
     {
-        var pool = await _context.Pools.FindAsync(poolId);
-        if(pool == null) return NotFound();
+        // 상시 아이템이 있는지 확인
+        var regularPoolQuery = await _context.Items.AnyAsync(i => i.IsRegular);
+        if(!regularPoolQuery) return NotFound();
 
-        // id rarity rate
-        var list = new List<TableData>();
-
-        var poolQuery = _context.ItemPoolRelations
-            .Where(r => r.PoolId == pool.Id);
-        
-        var probabilities = await poolQuery
-            .Select(r => new
-            {
-                Rarity = r.Item!.Rarity,
-                ItemId = r.ItemId
-            })
-            .GroupBy(r => r.Rarity)
-            .Select(g => new
-            {
-                Rarity = g.Key,
-                Count = g.Count() // 그룹별 개수 집계
-            })
-            .Join(
-                _context.Probabilities,
-                g => g.Rarity,
-                p => p.Rarity,
-                (g, p) => new
-                {
-                    Rarity = g.Rarity,
-                    Count = g.Count, //count는 항상 0보다 큼
-                    Weight = p.Weight
-                }
-            )
-            .ToListAsync();
-        
-        var sum = probabilities.Sum(r => r.Weight);
-        foreach (var probability in probabilities)
+        List<ItemData> result = new();
+        for (var i = 0; i < gachaData.Count; i++)
         {
-            // 동일 희귀도 내의 아이템 리스트 반환
-            var rarityList = await poolQuery
-                .Select(r => r.Item)
-                .Where(r => r.Rarity == probability.Rarity)
-                .ToListAsync();
+            var singleResult = await GetRandomItem();
+            if (singleResult == null) return NotFound();
+            result.Add(singleResult);
         }
-        // var sum = _itemTable.Sum(item => item.Item1);
-        // var data = _itemTable.Select(item =>
-        // {
-        //     var (item1, item2) = item;
-        //     return new TableData($"{(double)item1 / sum * 100}%", $"{item2}");
-        // }).ToList();
-        return Ok(list);
+        return Ok(result);
     }
-
+    
     [HttpPost("{poolId}")]
     public async Task<IActionResult> Gacha(string poolId, [FromBody]GachaData data)
     {
@@ -132,15 +87,55 @@ public class GachaController : ControllerBase
         // 동일 희귀도 및 픽업 여부 리스트에서 랜덤한 값 1개 추출(없을 경우 에러 반환 => 기본값 반환?)
         var o = poolList[Random.Shared.Next(poolList.Count)].Item;
         if (o == null) return null;
-        var result = o.Name;
-        return  new ItemData(result);
+        return new ItemData(o.Id, o.Name);
+    }
 
+    async Task<ItemData?> GetRandomItem()
+    {
+        var regularPoolQuery = _context.Items
+            .Where(i => i.IsRegular);
+        
+        if (!regularPoolQuery.Any()) return null;
+
+        var prob = regularPoolQuery
+            .GroupBy(i => i.Rarity)
+            .Select(g => new { Rarity = g.Key, Count = g.Count() })
+            .Join(
+            _context.Probabilities,
+            i => i.Rarity,
+            p => p.Rarity,
+            (i, p) => new
+            {
+                p.Weight,
+                p.Rarity,
+                Count = i.Count
+            });
+        // 희귀도 계산
+        var sum = await prob.SumAsync(i => i.Weight);
+        var rand = Random.Shared.Next(sum);
+        var acc = 0;
+        var rarity = 0;
+        foreach (var item in _context.Probabilities)
+        {
+            acc += item.Weight;
+            if (rand >= acc) continue;
+            rarity = item.Rarity;
+            break;
+        }
+        
+        // 데이터 베이스에서 희귀도 쿼리한 리스트 반환
+        var poolList = await regularPoolQuery
+            .Where(i => i.Rarity == rarity)
+            .ToListAsync();
+        // 동일 희귀도 및 픽업 여부 리스트에서 랜덤한 값 1개 추출(없을 경우 에러 반환 => 기본값 반환?)
+        var result = poolList[Random.Shared.Next(poolList.Count)];
+        return  new ItemData(result.Id,result.Name);
     }
 }
 
-public record TableData(string Rate, string Id);
+public record TableData(int Rarity, string Id);
 
 public record GachaData(int Count);
 
-public record ItemData(string Id);
+public record ItemData(string Id, string Name);
 

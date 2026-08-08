@@ -20,6 +20,9 @@ public class ApplicationDbContext : DbContext
         {
             entity.HasKey(i => i.Id);
             
+            entity.HasIndex(e => e.Name)
+                .IsUnique();
+            
             entity.HasOne(i => i.Probability)
                 .WithMany()
                 .HasForeignKey(i => i.Rarity)

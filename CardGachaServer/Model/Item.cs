@@ -19,4 +19,6 @@ public class Item
 
     public Probability? Probability{get; set;}
 
+    public bool IsRegular { get; set; } = false;
+
 }
