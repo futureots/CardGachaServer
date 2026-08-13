@@ -1,7 +1,11 @@
-﻿using CardGachaServer.Database;
+﻿using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using System.Security.Cryptography;
+using CardGachaServer.Database;
 using CardGachaServer.Model;
 using Google.Apis.Auth;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 
 namespace CardGachaServer.Service;
 
@@ -14,10 +18,11 @@ public interface IAuthService
 public class AuthService : IAuthService
 {
     private readonly AuthDbContext _dbContext;
-
-    public AuthService(AuthDbContext dbContext)
+    private readonly IConfiguration _config;
+    public AuthService(AuthDbContext dbContext, IConfiguration config)
     {
         _dbContext = dbContext;
+        _config = config;
     }
 
     public async Task<LoginResponse?> LoginGoogle(string idToken)
@@ -70,7 +75,25 @@ public class AuthService : IAuthService
 
     string CreateAccessToken(User user)
     {
-        return string.Empty;
+        var rsa = RSA.Create();
+        var securityKey = new RsaSecurityKey(rsa);
+        var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.RsaSha256);
+        
+        var claims = new []
+        {
+            new Claim(ClaimTypes.NameIdentifier, user.Id),
+            new Claim(ClaimTypes.Name, user.Name)
+        };
+        var token = new JwtSecurityToken(
+            issuer: _config["Jwt:Issuer"],
+            audience: _config["Jwt:Audience"],
+            claims: claims,
+            notBefore: DateTime.UtcNow,
+            expires: DateTime.UtcNow.AddMinutes(30),
+            signingCredentials: credentials
+        );
+        
+        return new  JwtSecurityTokenHandler().WriteToken(token);
     }
 
     string CreateAndStoreRefreshToken(User user)

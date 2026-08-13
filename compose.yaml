@@ -7,9 +7,14 @@ services:
             dockerfile: CardGachaServer/Dockerfile
         ports:
             - "3000:8080"
+        secrets:
+            - jwt_private_key
         environment:
             - ASPNETCORE_ENVIRONMENT=Development
             - ConnectionStrings__DefaultConnection=Host=database;Port=5432;Database=${DB_NAME};Username=${DB_USER};Password=${DB_PASSWORD};
+            - Jwt__Key=${JWT_KEY}
+            - Jwt__Issuer=${JWT_ISSUER}
+            - Jwt__Audience=${JWT_AUDIENCE}
         depends_on:
             database:
                 condition: service_healthy
@@ -32,3 +37,7 @@ services:
 
 volumes:
     db-data:
+
+secrets:
+    jwt_private_key:
+        file: ./secrets/private_key.pem

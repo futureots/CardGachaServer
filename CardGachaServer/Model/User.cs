@@ -2,7 +2,7 @@
 
 public class User
 {
-    public Guid Id { get; set; } =  Guid.NewGuid();
+    public string Id { get; set; } =  Guid.NewGuid().ToString();
     
     // 인게임에서 표현될 플레이어 닉네임
     public string Name { get; set; }
