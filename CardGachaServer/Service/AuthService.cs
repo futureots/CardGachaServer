@@ -6,23 +6,27 @@ using CardGachaServer.Model;
 using Google.Apis.Auth;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using StackExchange.Redis;
 
 namespace CardGachaServer.Service;
 
 public interface IAuthService
 {
     public Task<LoginResponse?> LoginGoogle(string idToken);
-    public Task<RefreshResponse?> Refresh(string refreshToken);
+    public Task<RefreshResponse?> RefreshAsync(string refreshToken);
 }
 
 public class AuthService : IAuthService
 {
+    private const int TokenValidMinute = 60;
     private readonly AuthDbContext _dbContext;
     private readonly IConfiguration _config;
-    public AuthService(AuthDbContext dbContext, IConfiguration config)
+    private readonly IDatabase _redis;
+    public AuthService(AuthDbContext dbContext, IConfiguration config, IConnectionMultiplexer redis)
     {
         _dbContext = dbContext;
         _config = config;
+        _redis = redis.GetDatabase();
     }
 
     public async Task<LoginResponse?> LoginGoogle(string idToken)
@@ -60,20 +64,30 @@ public class AuthService : IAuthService
             _dbContext.Users.Add(data);
             await _dbContext.SaveChangesAsync();
         }
-
-        // TODO : accessToken 및 refreshToken 구현
-        var accessToken = CreateAccessToken(data);
-        var refreshToken = CreateAndStoreRefreshToken(data);
-        // TODO : refreshToken db에 저장, 나중에 redis에 저장
-        return new LoginResponse(accessToken, refreshToken, name);
+        
+        var accessToken = GenerateAccessToken(data.Id);
+        var refreshToken = await GenerateRefreshTokenAsync(data.Id);
+        
+        return new LoginResponse(accessToken.token, refreshToken, accessToken.expiredAt, name);
     }
 
-    public async Task<RefreshResponse?> Refresh(string refreshToken)
+    public async Task<RefreshResponse?> RefreshAsync(string refreshToken)
     {
-        return null;
+        var userId = await ValidateRefreshTokenAsync(refreshToken);
+        if (userId == null)
+            return null;
+        
+        // 기존 토큰 제거
+        await RevokeRefreshTokenAsync(refreshToken);
+        
+        // 새로운 엑세스 토큰과 리프레시 토큰 발급(RTR 방식 사용)
+        var newAccessToken = GenerateAccessToken(userId);
+        var newRefreshToken = await GenerateRefreshTokenAsync(userId);
+        
+        return new RefreshResponse(newAccessToken.token, newRefreshToken, newAccessToken.expiredAt);
     }
 
-    string CreateAccessToken(User user)
+    (string token,DateTime expiredAt) GenerateAccessToken(string userId)
     {
         var rsa = RSA.Create();
         var securityKey = new RsaSecurityKey(rsa);
@@ -81,33 +95,56 @@ public class AuthService : IAuthService
         
         var claims = new []
         {
-            new Claim(ClaimTypes.NameIdentifier, user.Id),
-            new Claim(ClaimTypes.Name, user.Name)
+            new Claim(JwtRegisteredClaimNames.Sub, userId),
         };
+        var expiredAt = DateTime.UtcNow.AddMinutes(TokenValidMinute);
         var token = new JwtSecurityToken(
             issuer: _config["Jwt:Issuer"],
             audience: _config["Jwt:Audience"],
             claims: claims,
             notBefore: DateTime.UtcNow,
-            expires: DateTime.UtcNow.AddMinutes(30),
+            expires: expiredAt,
             signingCredentials: credentials
         );
         
-        return new  JwtSecurityTokenHandler().WriteToken(token);
+        return new (new JwtSecurityTokenHandler().WriteToken(token), expiredAt);
     }
-
-    string CreateAndStoreRefreshToken(User user)
+    
+    // TODO : 나중에 
+    async Task<string> GenerateRefreshTokenAsync(string userId)
     {
-        return string.Empty;
+        var rand = RandomNumberGenerator.GetBytes(64);
+        var refreshToken = Convert.ToBase64String(rand)
+            .Replace("+", "-").Replace("/", "_").Replace("=", "");
+        
+        var key = $"refresh:{refreshToken}";
+        await _redis.StringSetAsync(key, userId,TimeSpan.FromDays(14));
+        
+        return refreshToken;
     }
+    
+    async Task<string?> ValidateRefreshTokenAsync(string refreshToken)
+    {
+        var key = $"refresh:{refreshToken}";
+        var storedUserId = await _redis.StringGetAsync(key);
+        return storedUserId.HasValue ? storedUserId.ToString() : null;
+    }
+    async Task RevokeRefreshTokenAsync(string refreshToken)
+    {
+        var key = $"refresh:{refreshToken}";
+        await _redis.KeyDeleteAsync(key);
+    }
+    
 }
 
 public record LoginResponse(
     string AccessToken,
     string RefreshToken,
+    DateTime ExpiredAt,
     string Name
     );
 
 public record RefreshResponse(
     string AccessToken,
-    string RefreshToken);
+    string RefreshToken,
+    DateTime ExpiredAt);

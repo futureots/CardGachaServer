@@ -1,9 +1,10 @@
 ﻿using CardGachaServer.Service;
-using Microsoft.AspNetCore.Identity.Data;
 using Microsoft.AspNetCore.Mvc;
 
 namespace CardGachaServer.Controllers;
 
+[ApiController]
+[Route("api/[controller]")]
 public class AuthController : ControllerBase
 {
     private readonly IAuthService  _authService;
@@ -22,12 +23,17 @@ public class AuthController : ControllerBase
     }
 
     [HttpPost("refresh")]
-    public async Task<IActionResult> Refresh([FromBody] RefreshRequest refreshToken)
+    public async Task<IActionResult> Refresh([FromBody] RefreshRequest req)
     {
-        var result = await _authService.Refresh(refreshToken.RefreshToken);
-        if(result== null) return  Unauthorized(new {error = "유효하지 않은 토큰입니다."});
+        var result = await _authService.RefreshAsync(req.RefreshToken);
+        if (result == null)
+        {
+            return  Unauthorized(new {error = "유효하지 않은 토큰입니다."});
+        }
         return Ok(result);
     }
 }
 
 public record GoogleLoginRequest(string IdToken);
+
+public record RefreshRequest(string RefreshToken);

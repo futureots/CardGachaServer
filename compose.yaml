@@ -12,6 +12,7 @@ services:
         environment:
             - ASPNETCORE_ENVIRONMENT=Development
             - ConnectionStrings__DefaultConnection=Host=database;Port=5432;Database=${DB_NAME};Username=${DB_USER};Password=${DB_PASSWORD};
+            - ConnectionStrings__Redis=redis:6379
             - Jwt__Key=${JWT_KEY}
             - Jwt__Issuer=${JWT_ISSUER}
             - Jwt__Audience=${JWT_AUDIENCE}
@@ -21,12 +22,12 @@ services:
     database:
         image: postgres:latest
         container_name: database
+        expose:
+            - 5432
         environment:
             POSTGRES_USER: ${DB_USER}
             POSTGRES_PASSWORD: ${DB_PASSWORD}
             POSTGRES_DB: ${DB_NAME}
-        ports:
-            - "5432:5432"
         volumes:
             - db-data:/var/lib/postgresql
         healthcheck:
@@ -34,9 +35,18 @@ services:
             interval: 5s
             timeout: 5s
             retries: 5
+    redis:
+        image: redis:latest
+        container_name: redis
+        expose:
+            - 6379
+        volumes:
+            - redis-data:/data
+        command: redis-server --appendonly yes
 
 volumes:
     db-data:
+    redis-data:
 
 secrets:
     jwt_private_key:
