@@ -1,6 +1,6 @@
 ﻿namespace CardGachaServer.Model;
 
-public class Item
+public class Character
 {
     /// <summary>
     /// DB에서 사용할 아이템 식별자
@@ -15,9 +15,9 @@ public class Item
     /// <summary>
     /// 아이템 희귀도
     /// </summary>
-    public int Rarity{get; set;}
+    public string RarityId{get; set;}
 
-    public Probability? Probability{get; set;}
+    public Rarity? Rarity{get; set;}
 
     public bool IsRegular { get; set; } = false;
 

@@ -1,6 +1,6 @@
 ﻿namespace CardGachaServer.Model;
 
-public class ItemPoolRelation
+public class CharacterPoolRelation
 {
     /// <summary>
     /// 고유 ID
@@ -10,8 +10,8 @@ public class ItemPoolRelation
     /// <summary>
     /// 아이템 FK
     /// </summary>
-    public Item? Item{get; set;}
-    public string ItemId { get; set; } = string.Empty;
+    public Character? Character{get; set;}
+    public string CharacterId { get; set; } = string.Empty;
 
     /// <summary>
     /// 풀 FK

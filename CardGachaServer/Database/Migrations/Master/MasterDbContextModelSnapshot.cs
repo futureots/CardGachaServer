@@ -8,10 +8,10 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
 
-namespace CardGachaServer.Database.Migrations.App
+namespace CardGachaServer.Database.Migrations.Master
 {
-    [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [DbContext(typeof(MasterDbContext))]
+    partial class MasterDbContextModelSnapshot : ModelSnapshot
     {
         protected override void BuildModel(ModelBuilder modelBuilder)
         {
@@ -22,7 +22,7 @@ namespace CardGachaServer.Database.Migrations.App
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
-            modelBuilder.Entity("CardGachaServer.Model.Item", b =>
+            modelBuilder.Entity("CardGachaServer.Model.Character", b =>
                 {
                     b.Property<string>("Id")
                         .HasColumnType("text");
@@ -34,26 +34,27 @@ namespace CardGachaServer.Database.Migrations.App
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<int>("Rarity")
-                        .HasColumnType("integer");
+                    b.Property<string>("RarityId")
+                        .IsRequired()
+                        .HasColumnType("text");
 
                     b.HasKey("Id");
 
                     b.HasIndex("Name")
                         .IsUnique();
 
-                    b.HasIndex("Rarity");
+                    b.HasIndex("RarityId");
 
-                    b.ToTable("Items");
+                    b.ToTable("RegularCharacters");
                 });
 
-            modelBuilder.Entity("CardGachaServer.Model.ItemPoolRelation", b =>
+            modelBuilder.Entity("CardGachaServer.Model.CharacterPoolRelation", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
-                    b.Property<string>("ItemId")
+                    b.Property<string>("CharacterId")
                         .IsRequired()
                         .HasColumnType("text");
 
@@ -63,12 +64,12 @@ namespace CardGachaServer.Database.Migrations.App
 
                     b.HasKey("Id");
 
-                    b.HasIndex("ItemId");
+                    b.HasIndex("CharacterId");
 
-                    b.HasIndex("PoolId", "ItemId")
+                    b.HasIndex("PoolId", "CharacterId")
                         .IsUnique();
 
-                    b.ToTable("ItemPoolRelations");
+                    b.ToTable("CharacterPoolRelations");
                 });
 
             modelBuilder.Entity("CardGachaServer.Model.Pool", b =>
@@ -87,38 +88,39 @@ namespace CardGachaServer.Database.Migrations.App
                     b.ToTable("Pools");
                 });
 
-            modelBuilder.Entity("CardGachaServer.Model.Probability", b =>
+            modelBuilder.Entity("CardGachaServer.Model.Rarity", b =>
                 {
-                    b.Property<int>("Rarity")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
+                    b.Property<string>("Id")
+                        .HasColumnType("text");
 
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Rarity"));
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("text");
 
                     b.Property<int>("Weight")
                         .HasColumnType("integer");
 
-                    b.HasKey("Rarity");
+                    b.HasKey("Id");
 
-                    b.ToTable("Probabilities");
+                    b.ToTable("Rarities");
                 });
 
-            modelBuilder.Entity("CardGachaServer.Model.Item", b =>
+            modelBuilder.Entity("CardGachaServer.Model.Character", b =>
                 {
-                    b.HasOne("CardGachaServer.Model.Probability", "Probability")
+                    b.HasOne("CardGachaServer.Model.Rarity", "Rarity")
                         .WithMany()
-                        .HasForeignKey("Rarity")
+                        .HasForeignKey("RarityId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("Probability");
+                    b.Navigation("Rarity");
                 });
 
-            modelBuilder.Entity("CardGachaServer.Model.ItemPoolRelation", b =>
+            modelBuilder.Entity("CardGachaServer.Model.CharacterPoolRelation", b =>
                 {
-                    b.HasOne("CardGachaServer.Model.Item", "Item")
+                    b.HasOne("CardGachaServer.Model.Character", "Character")
                         .WithMany()
-                        .HasForeignKey("ItemId")
+                        .HasForeignKey("CharacterId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
@@ -128,7 +130,7 @@ namespace CardGachaServer.Database.Migrations.App
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("Item");
+                    b.Navigation("Character");
 
                     b.Navigation("Pool");
                 });

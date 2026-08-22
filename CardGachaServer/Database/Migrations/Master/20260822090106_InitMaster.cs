@@ -1,13 +1,12 @@
 ﻿using System;
 using Microsoft.EntityFrameworkCore.Migrations;
-using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
 
-namespace CardGachaServer.Database.Migrations.App
+namespace CardGachaServer.Database.Migrations.Master
 {
     /// <inheritdoc />
-    public partial class InitApp : Migration
+    public partial class InitMaster : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -26,100 +25,100 @@ namespace CardGachaServer.Database.Migrations.App
                 });
 
             migrationBuilder.CreateTable(
-                name: "Probabilities",
-                columns: table => new
-                {
-                    Rarity = table.Column<int>(type: "integer", nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    Weight = table.Column<int>(type: "integer", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_Probabilities", x => x.Rarity);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "Items",
+                name: "Rarities",
                 columns: table => new
                 {
                     Id = table.Column<string>(type: "text", nullable: false),
                     Name = table.Column<string>(type: "text", nullable: false),
-                    Rarity = table.Column<int>(type: "integer", nullable: false),
+                    Weight = table.Column<int>(type: "integer", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Rarities", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "RegularCharacters",
+                columns: table => new
+                {
+                    Id = table.Column<string>(type: "text", nullable: false),
+                    Name = table.Column<string>(type: "text", nullable: false),
+                    RarityId = table.Column<string>(type: "text", nullable: false),
                     IsRegular = table.Column<bool>(type: "boolean", nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_Items", x => x.Id);
+                    table.PrimaryKey("PK_RegularCharacters", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_Items_Probabilities_Rarity",
-                        column: x => x.Rarity,
-                        principalTable: "Probabilities",
-                        principalColumn: "Rarity",
+                        name: "FK_RegularCharacters_Rarities_RarityId",
+                        column: x => x.RarityId,
+                        principalTable: "Rarities",
+                        principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
-                name: "ItemPoolRelations",
+                name: "CharacterPoolRelations",
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
-                    ItemId = table.Column<string>(type: "text", nullable: false),
+                    CharacterId = table.Column<string>(type: "text", nullable: false),
                     PoolId = table.Column<string>(type: "text", nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_ItemPoolRelations", x => x.Id);
+                    table.PrimaryKey("PK_CharacterPoolRelations", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_ItemPoolRelations_Items_ItemId",
-                        column: x => x.ItemId,
-                        principalTable: "Items",
+                        name: "FK_CharacterPoolRelations_Pools_PoolId",
+                        column: x => x.PoolId,
+                        principalTable: "Pools",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
-                        name: "FK_ItemPoolRelations_Pools_PoolId",
-                        column: x => x.PoolId,
-                        principalTable: "Pools",
+                        name: "FK_CharacterPoolRelations_RegularCharacters_CharacterId",
+                        column: x => x.CharacterId,
+                        principalTable: "RegularCharacters",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateIndex(
-                name: "IX_ItemPoolRelations_ItemId",
-                table: "ItemPoolRelations",
-                column: "ItemId");
+                name: "IX_CharacterPoolRelations_CharacterId",
+                table: "CharacterPoolRelations",
+                column: "CharacterId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_ItemPoolRelations_PoolId_ItemId",
-                table: "ItemPoolRelations",
-                columns: new[] { "PoolId", "ItemId" },
+                name: "IX_CharacterPoolRelations_PoolId_CharacterId",
+                table: "CharacterPoolRelations",
+                columns: new[] { "PoolId", "CharacterId" },
                 unique: true);
 
             migrationBuilder.CreateIndex(
-                name: "IX_Items_Name",
-                table: "Items",
+                name: "IX_RegularCharacters_Name",
+                table: "RegularCharacters",
                 column: "Name",
                 unique: true);
 
             migrationBuilder.CreateIndex(
-                name: "IX_Items_Rarity",
-                table: "Items",
-                column: "Rarity");
+                name: "IX_RegularCharacters_RarityId",
+                table: "RegularCharacters",
+                column: "RarityId");
         }
 
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropTable(
-                name: "ItemPoolRelations");
-
-            migrationBuilder.DropTable(
-                name: "Items");
+                name: "CharacterPoolRelations");
 
             migrationBuilder.DropTable(
                 name: "Pools");
 
             migrationBuilder.DropTable(
-                name: "Probabilities");
+                name: "RegularCharacters");
+
+            migrationBuilder.DropTable(
+                name: "Rarities");
         }
     }
 }

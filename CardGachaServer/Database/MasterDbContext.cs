@@ -3,33 +3,33 @@ using Microsoft.EntityFrameworkCore;
 
 namespace CardGachaServer.Database;
 
-public class ApplicationDbContext : DbContext
+public class MasterDbContext : DbContext
 {
-    public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : base(options)
+    public MasterDbContext(DbContextOptions<MasterDbContext> options) : base(options)
     {
     }
     
-    public DbSet<Item> Items { get; set; }
-    public DbSet<ItemPoolRelation>  ItemPoolRelations { get; set; }
+    public DbSet<Character> RegularCharacters { get; set; }
+    public DbSet<CharacterPoolRelation>  CharacterPoolRelations { get; set; }
     public DbSet<Pool> Pools { get; set; }
-    public DbSet<Probability> Probabilities { get; set; }
+    public DbSet<Rarity> Rarities { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        modelBuilder.Entity<Item>(entity =>
+        modelBuilder.Entity<Character>(entity =>
         {
-            entity.HasKey(i => i.Id);
+            entity.HasKey(c => c.Id);
             
             entity.HasIndex(e => e.Name)
                 .IsUnique();
             
-            entity.HasOne(i => i.Probability)
+            entity.HasOne(c => c.Rarity)
                 .WithMany()
-                .HasForeignKey(i => i.Rarity)
+                .HasForeignKey(c => c.RarityId)
                 .OnDelete(DeleteBehavior.Cascade);
         });
             
-        modelBuilder.Entity<ItemPoolRelation>(entity =>
+        modelBuilder.Entity<CharacterPoolRelation>(entity =>
         {
             entity.HasKey(r => r.Id);
 
@@ -38,18 +38,18 @@ public class ApplicationDbContext : DbContext
                 .HasForeignKey(r => r.PoolId)
                 .OnDelete(DeleteBehavior.Cascade);
 
-            entity.HasOne(r => r.Item)
+            entity.HasOne(r => r.Character)
                 .WithMany()
-                .HasForeignKey(r => r.ItemId)
+                .HasForeignKey(r => r.CharacterId)
                 .OnDelete(DeleteBehavior.Cascade);
 
-            entity.HasIndex(r => new { r.PoolId, r.ItemId }).IsUnique();
+            entity.HasIndex(r => new { r.PoolId, CharacterId = r.CharacterId }).IsUnique();
 
         });
         modelBuilder.Entity<Pool>()
             .HasKey(p => p.Id);
-        modelBuilder.Entity<Probability>()
-            .HasKey(p => p.Rarity);
+        modelBuilder.Entity<Rarity>()
+            .HasKey(p => p.Id);
             
     }
 }

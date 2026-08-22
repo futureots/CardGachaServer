@@ -9,7 +9,7 @@ var builder = WebApplication.CreateBuilder(args);
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
 
-builder.Services.AddDbContext<ApplicationDbContext>(options =>
+builder.Services.AddDbContext<MasterDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"),
         b => b.MigrationsHistoryTable("__EFMigrationsHistory_App")));
 
@@ -20,24 +20,28 @@ builder.Services.AddDbContext<AuthDbContext>(options =>
 builder.Services.AddControllers();
 
 builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<IGachaService, GachaService>();
+//builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddSingleton<IConnectionMultiplexer>(sp =>
     ConnectionMultiplexer.Connect(builder.Configuration.GetConnectionString("Redis")));
 
 var app = builder.Build();
 
+
+
+app.UseRouting();
+
+app.UseAuthentication();
+app.UseAuthorization();
+
 using (var scope = app.Services.CreateScope())
 {
-    var database =scope.ServiceProvider.GetService<ApplicationDbContext>();
+    var masterDb =scope.ServiceProvider.GetService<MasterDbContext>();
     var authDb = scope.ServiceProvider.GetService<AuthDbContext>();
 
-    // db 구조가 변경될때만 실행
-    /*database?.Database.EnsureDeleted();
-    database?.Database.EnsureCreated();*/
-    // 나중에 1차적으로 완료되면 migration 만들어서 사용하기
-    database?.Database.Migrate();
-    authDb?.Database.Migrate();
     
-    //authDb?.Database.EnsureCreated();
+    masterDb?.Database.Migrate();
+    authDb?.Database.Migrate();
 }
 
 app.MapControllers();
@@ -47,8 +51,6 @@ if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
 }
-
-app.UseRouting();
 
 app.UseHttpsRedirection();
 
