@@ -6,7 +6,7 @@ namespace CardGachaServer.Service;
 
 public interface IUserService
 {
-    public Task<bool> AddUserData(Character character);
+    public Task<bool> AddUserData(string userId,Character character);
 }
 public class UserService : IUserService
 {
@@ -17,9 +17,11 @@ public class UserService : IUserService
         _userDbContext = userDbContext;
     }
 
-    public async Task<bool> AddUserData(Character character)
+    public async Task<bool> AddUserData(string userId, Character character)
     {
-        var isExist = await _userDbContext.OwnedCharacters.AnyAsync(o => o.CharacterId == character.Id);
+        var isExist = await _userDbContext.OwnedCharacters
+            .Where(o => o.UserId == userId)
+            .AnyAsync(o => o.CharacterId == character.Id);
         if (isExist)
         {
             return false;
@@ -27,9 +29,9 @@ public class UserService : IUserService
 
         var owned = new OwnedCharacter()
         {
+            UserId =  userId,
             CharacterId = character.Id,
-            // 유저 id 설정, 그 외 레벨과 같은 초기값은 클래스 내부에서 미리 설정
-
+            // TODO : 레벨과 같은 초기값은 클래스 내부에서 미리 설정
         };
         _userDbContext.OwnedCharacters.Add(owned);
         await _userDbContext.SaveChangesAsync();

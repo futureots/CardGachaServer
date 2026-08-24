@@ -1,5 +1,6 @@
 ﻿using CardGachaServer.Database;
 using CardGachaServer.Model;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -69,7 +70,7 @@ public class TestController : ControllerBase
         return Ok(result);
     }
     
-        
+    [Authorize]
     [HttpPost("echo")]
     public Task<IActionResult> Echo([FromBody] EchoData data)
     {

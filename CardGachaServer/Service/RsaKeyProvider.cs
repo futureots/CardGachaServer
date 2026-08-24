@@ -1,14 +1,26 @@
 ﻿using System.Security.Cryptography;
-using Microsoft.IdentityModel.Tokens;
 
 namespace CardGachaServer.Service;
 
-public static class RsaKeyProvider
+public sealed class RsaKeyProvider : IDisposable
 {
-    private static readonly RSA _rsa = RSA.Create();
+    public RSA PrivateKey { get; }
+    public RSA PublicKey { get; }
 
-    public static RsaSecurityKey GetSecurityKey()
+    public RsaKeyProvider(IConfiguration config)
     {
-        return new RsaSecurityKey(_rsa);
+        var privatePath = config["PRIVATE_KEY_PATH"] ?? "/run/secrets/private_key";
+        var publicPath = config["PUBLIC_KEY_PATH"] ?? "/run/secrets/public_key";
+        
+        PrivateKey = RSA.Create();
+        PrivateKey.ImportFromPem(File.ReadAllText(privatePath));
+        
+        PublicKey = RSA.Create();
+        PublicKey.ImportFromPem(File.ReadAllText(publicPath));
+    }
+    public void Dispose()
+    {
+        PrivateKey.Dispose();
+        PublicKey.Dispose();
     }
 }

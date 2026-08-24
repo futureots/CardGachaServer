@@ -22,10 +22,12 @@ public class AuthService : IAuthService
     private readonly AuthDbContext _dbContext;
     private readonly IConfiguration _config;
     private readonly IDatabase _redis;
-    public AuthService(AuthDbContext dbContext, IConfiguration config, IConnectionMultiplexer redis)
+    private RsaKeyProvider _rsaKeyProvider;
+    public AuthService(AuthDbContext dbContext, IConfiguration config, IConnectionMultiplexer redis, RsaKeyProvider rsaKeyProvider)
     {
         _dbContext = dbContext;
         _config = config;
+        _rsaKeyProvider = rsaKeyProvider;
         _redis = redis.GetDatabase();
     }
 
@@ -89,8 +91,7 @@ public class AuthService : IAuthService
 
     (string token,DateTime expiredAt) GenerateAccessToken(string userId)
     {
-        var rsa = RSA.Create();
-        var securityKey = new RsaSecurityKey(rsa);
+        var securityKey = new RsaSecurityKey(_rsaKeyProvider.PrivateKey);
         var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.RsaSha256);
         
         var claims = new []
