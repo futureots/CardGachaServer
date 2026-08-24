@@ -13,8 +13,6 @@ public class MasterDbContext : DbContext
     public DbSet<CharacterPoolRelation>  CharacterPoolRelations { get; set; }
     public DbSet<Pool> Pools { get; set; }
     public DbSet<Rarity> Rarities { get; set; }
-    
-    public DbSet<Item> Items { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -52,9 +50,6 @@ public class MasterDbContext : DbContext
             .HasKey(p => p.Id);
         modelBuilder.Entity<Rarity>()
             .HasKey(p => p.Id);
-
-        modelBuilder.Entity<Item>()
-            .HasKey(i => i.Id);
 
     }
 }

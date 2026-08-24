@@ -1,5 +1,4 @@
 ﻿using System.Security.Claims;
-using CardGachaServer.Database;
 using CardGachaServer.Service;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -25,15 +24,5 @@ public class UserController : ControllerBase
         if(string.IsNullOrEmpty(userId)) return Unauthorized();
         var ownedCharacters = await _userService.GetUserCharacters(userId);
         return Ok(ownedCharacters);
-    }
-
-    [HttpGet("Item")]
-    public async Task<IActionResult> GetUserItems()
-    {
-        var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-        if (string.IsNullOrWhiteSpace(userId)) return Unauthorized();
-        
-        var ownedItems = await _userService.GetUserItems(userId);
-        return Ok(ownedItems);
     }
 }

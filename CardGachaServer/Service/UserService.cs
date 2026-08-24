@@ -8,8 +8,6 @@ public interface IUserService
 {
     public Task<bool> AddOwnedCharacter(string userId,Character character);
     public Task<List<CharacterData>> GetUserCharacters(string userId);
-    
-    public Task<List<ItemData>> GetUserItems(string userId);
 }
 public class UserService : IUserService
 {
@@ -22,13 +20,14 @@ public class UserService : IUserService
 
     public async Task<bool> AddOwnedCharacter(string userId, Character character)
     {
-        var isExist = await _userDbContext.OwnedCharacters
+        var existCharacter = await _userDbContext.OwnedCharacters
             .Where(o => o.UserId == userId)
-            .AnyAsync(o => o.CharacterId == character.Id);
-        if (isExist)
+            .FirstOrDefaultAsync(o => o.CharacterId == character.Id);
+        if (existCharacter != null)
         {
-            // TODO : 인벤토리도 추가할 경우 돌파 재료 더하기
-            
+            // 일단 중복일 경우 해당 캐릭터의 카운트만 상승
+            existCharacter.Count = existCharacter.Count + 1;
+            await _userDbContext.SaveChangesAsync();
             return false;
         }
 
@@ -54,19 +53,7 @@ public class UserService : IUserService
             .ToListAsync();
         return data;
     }
-
-    public async Task<List<ItemData>> GetUserItems(string userId)
-    {
-        var data = await _userDbContext.OwnedItems
-            .Where(o => o.UserId == userId)
-            .Select(o => new ItemData(
-                o.ItemId,
-                o.Count))
-            .ToListAsync();
-        return data;
-    }
+    
 }
 
 public record CharacterData(string CharacterId, int Level);
-
-public record ItemData(string ItemId, int Count);

@@ -12,7 +12,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace CardGachaServer.Database.Migrations.Master
 {
     [DbContext(typeof(MasterDbContext))]
-    [Migration("20260822090106_InitMaster")]
+    [Migration("20260824072702_InitMaster")]
     partial class InitMaster
     {
         /// <inheritdoc />

@@ -29,15 +29,6 @@ public class MasterController : ControllerBase
                 // TODO : 나중에 여기에 추가적으로 초기 스탯들 부여하기
             })
             .ToListAsync();
-        var lastUpdate = DateTime.UtcNow;
-        return Ok(new {Characters = result, LastUpdate = lastUpdate});
-    }
-
-    [HttpGet("Item")]
-    public async Task<IActionResult> GetItemTable()
-    {
-        var result = await _masterContext.Items
-            .ToListAsync();
         return Ok(result);
     }
 

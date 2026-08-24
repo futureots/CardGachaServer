@@ -8,27 +8,30 @@ using StackExchange.Redis;
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
-// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
 
 builder.Services.AddDbContext<MasterDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"),
-        b => b.MigrationsHistoryTable("__EFMigrationsHistory_App")));
+        b => b.MigrationsHistoryTable("__EFMigrationsHistory_Master")));
 
 builder.Services.AddDbContext<AuthDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"),
         b => b.MigrationsHistoryTable("__EFMigrationsHistory_Auth")));
 
+builder.Services.AddDbContext<UserDbContext>(options =>
+    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"),
+        b => b.MigrationsHistoryTable("__EFMigrationsHistory_User")));
+
 builder.Services.AddControllers();
 
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IGachaService, GachaService>();
-//builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddSingleton<RsaKeyProvider>();
 builder.Services.AddSingleton<IConnectionMultiplexer>(sp =>
     ConnectionMultiplexer.Connect(builder.Configuration.GetConnectionString("Redis")));
 
-
+// 인증 구현
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer();
 
@@ -67,10 +70,12 @@ using (var scope = app.Services.CreateScope())
 {
     var masterDb =scope.ServiceProvider.GetService<MasterDbContext>();
     var authDb = scope.ServiceProvider.GetService<AuthDbContext>();
+    var userDb = scope.ServiceProvider.GetService<UserDbContext>();
 
     
     masterDb?.Database.Migrate();
     authDb?.Database.Migrate();
+    userDb?.Database.Migrate();
 }
 
 app.MapControllers();

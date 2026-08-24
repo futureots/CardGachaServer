@@ -12,4 +12,5 @@ public class User
     
     // 계정 sub
     public string ProviderId { get; set; }
+    
 }

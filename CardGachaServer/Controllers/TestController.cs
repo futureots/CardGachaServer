@@ -10,17 +10,17 @@ namespace CardGachaServer.Controllers;
 [Route("api/[controller]")]
 public class TestController : ControllerBase
 {
-    private readonly MasterDbContext _context;
+    private readonly MasterDbContext _masterContext;
     
-    public TestController(MasterDbContext context) : base()
+    public TestController(MasterDbContext masterContext) : base()
     {
-        _context = context;
+        _masterContext = masterContext;
     }
 
     [HttpPost("character")]
     public async Task<IActionResult> PostCharacterData([FromBody] CharacterDto charData)
     {
-        var rarity = await _context.Rarities.FirstOrDefaultAsync(r => r.Name == charData.Rarity);
+        var rarity = await _masterContext.Rarities.FirstOrDefaultAsync(r => r.Name == charData.Rarity);
         if (rarity == null) return NotFound(new {message = "Rarity not found"});
         
         var character = new Character()
@@ -29,8 +29,8 @@ public class TestController : ControllerBase
             Name = charData.CharacterName,
             IsRegular = true,
         };
-        await _context.RegularCharacters.AddAsync(character);
-        await _context.SaveChangesAsync();
+        await _masterContext.RegularCharacters.AddAsync(character);
+        await _masterContext.SaveChangesAsync();
         
         return Ok(character);
     }
@@ -38,7 +38,7 @@ public class TestController : ControllerBase
     [HttpPost("rarity")]
     public async Task<IActionResult> PostRarityData([FromBody] RarityData rarityData)
     {
-        var rarity = await _context.Rarities.FirstOrDefaultAsync(r => r.Name == rarityData.Rarity);
+        var rarity = await _masterContext.Rarities.FirstOrDefaultAsync(r => r.Name == rarityData.Rarity);
         if (rarity == null)
         {
             rarity = new Rarity()
@@ -46,18 +46,32 @@ public class TestController : ControllerBase
                 Name = rarityData.Rarity,
                 Weight = rarityData.Weight
             };
-            _context.Rarities.Add(rarity);
+            _masterContext.Rarities.Add(rarity);
         }
         else
         {
             rarity.Weight = rarityData.Weight;
         }
-        await _context.SaveChangesAsync();
+        await _masterContext.SaveChangesAsync();
         return Ok(rarity);
     }
 
-    
-    [Authorize]
+    [HttpGet("character")]
+    public async Task<IActionResult> GetCharacterTable()
+    {
+        var result = await _masterContext.RegularCharacters
+            .ToListAsync();
+        return Ok(result);
+    }
+
+    [HttpGet("rarity")]
+    public async Task<IActionResult> GetRarityTable()
+    {
+        var result = await _masterContext.Rarities
+            .ToListAsync();
+        return Ok(result);
+    }
+
     [HttpPost("echo")]
     public Task<IActionResult> Echo([FromBody] EchoData data)
     {

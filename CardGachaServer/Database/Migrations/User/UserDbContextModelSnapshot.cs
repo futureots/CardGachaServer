@@ -7,10 +7,10 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
 
-namespace CardGachaServer.Database.Migrations.Auth
+namespace CardGachaServer.Database.Migrations.User
 {
-    [DbContext(typeof(AuthDbContext))]
-    partial class AuthDbContextModelSnapshot : ModelSnapshot
+    [DbContext(typeof(UserDbContext))]
+    partial class UserDbContextModelSnapshot : ModelSnapshot
     {
         protected override void BuildModel(ModelBuilder modelBuilder)
         {
@@ -21,26 +21,23 @@ namespace CardGachaServer.Database.Migrations.Auth
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
-            modelBuilder.Entity("CardGachaServer.Model.User", b =>
+            modelBuilder.Entity("CardGachaServer.Model.OwnedCharacter", b =>
                 {
-                    b.Property<string>("Id")
+                    b.Property<string>("CharacterId")
                         .HasColumnType("text");
 
-                    b.Property<string>("Name")
-                        .IsRequired()
+                    b.Property<string>("UserId")
                         .HasColumnType("text");
 
-                    b.Property<string>("Provider")
-                        .IsRequired()
-                        .HasColumnType("text");
+                    b.Property<int>("Count")
+                        .HasColumnType("integer");
 
-                    b.Property<string>("ProviderId")
-                        .IsRequired()
-                        .HasColumnType("text");
+                    b.Property<int>("Level")
+                        .HasColumnType("integer");
 
-                    b.HasKey("Id");
+                    b.HasKey("CharacterId", "UserId");
 
-                    b.ToTable("Users");
+                    b.ToTable("OwnedCharacters");
                 });
 #pragma warning restore 612, 618
         }
