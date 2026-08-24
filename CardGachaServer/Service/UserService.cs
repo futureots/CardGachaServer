@@ -6,7 +6,10 @@ namespace CardGachaServer.Service;
 
 public interface IUserService
 {
-    public Task<bool> AddUserData(string userId,Character character);
+    public Task<bool> AddOwnedCharacter(string userId,Character character);
+    public Task<List<CharacterData>> GetUserCharacters(string userId);
+    
+    public Task<List<ItemData>> GetUserItems(string userId);
 }
 public class UserService : IUserService
 {
@@ -17,13 +20,15 @@ public class UserService : IUserService
         _userDbContext = userDbContext;
     }
 
-    public async Task<bool> AddUserData(string userId, Character character)
+    public async Task<bool> AddOwnedCharacter(string userId, Character character)
     {
         var isExist = await _userDbContext.OwnedCharacters
             .Where(o => o.UserId == userId)
             .AnyAsync(o => o.CharacterId == character.Id);
         if (isExist)
         {
+            // TODO : 인벤토리도 추가할 경우 돌파 재료 더하기
+            
             return false;
         }
 
@@ -35,7 +40,33 @@ public class UserService : IUserService
         };
         _userDbContext.OwnedCharacters.Add(owned);
         await _userDbContext.SaveChangesAsync();
-        // TODO : 계정 데이터를 확인하고 해당 캐릭터가 존재하면 돌파 재료나 예외 처리를 진행하고 false를 반환. 없을 경우 캐릭터를 추가하고 true를 반환
+        
         return true;
     }
+
+    public async Task<List<CharacterData>> GetUserCharacters(string userId)
+    {
+        var data = await _userDbContext.OwnedCharacters
+            .Where(o => o.UserId == userId)
+            .Select(o => new CharacterData(
+                o.CharacterId,
+                o.Level))
+            .ToListAsync();
+        return data;
+    }
+
+    public async Task<List<ItemData>> GetUserItems(string userId)
+    {
+        var data = await _userDbContext.OwnedItems
+            .Where(o => o.UserId == userId)
+            .Select(o => new ItemData(
+                o.ItemId,
+                o.Count))
+            .ToListAsync();
+        return data;
+    }
 }
+
+public record CharacterData(string CharacterId, int Level);
+
+public record ItemData(string ItemId, int Count);

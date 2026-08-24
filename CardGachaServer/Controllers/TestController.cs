@@ -56,19 +56,6 @@ public class TestController : ControllerBase
         return Ok(rarity);
     }
 
-    [HttpGet("character")]
-    public async Task<IActionResult> GetCharacterTable()
-    {
-        var result = await _context.RegularCharacters.ToListAsync();
-        return Ok(result);
-    }
-
-    [HttpGet("rarity")]
-    public async Task<IActionResult> GetRarityTable()
-    {
-        var result = await _context.Rarities.ToListAsync();
-        return Ok(result);
-    }
     
     [Authorize]
     [HttpPost("echo")]

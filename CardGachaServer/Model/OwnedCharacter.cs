@@ -9,5 +9,5 @@ public class OwnedCharacter
     public string CharacterId { get; set; } = string.Empty;
 
     // TODO : 캐릭터가 가질 수 있는 값들(레벨, 돌파 횟수 등) 추가 필요
-
+    public int Level { get; set; } = 1;
 }
