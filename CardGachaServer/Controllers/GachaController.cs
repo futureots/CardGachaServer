@@ -31,7 +31,7 @@ public class GachaController : ControllerBase
             // 캐릭터를 계정에 추가하기(중복 결과 반환)
             var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             // 그럴리 없지만 일단 해놓기
-            if(string.IsNullOrWhiteSpace(userId)) return Unauthorized();
+            if(string.IsNullOrWhiteSpace(userId)) return Unauthorized(new {message = "Wrong user id"});
             
             var isFirst = await _userService.AddOwnedCharacter(userId,result.Character);
             

@@ -2,24 +2,16 @@ services:
     controller:
         image: gachaserver:latest
         container_name: gacha_server
-        user: root #나중에 swarm이나 k8s로 배포하기전에 변경하기
         build:
             context: .
             dockerfile: CardGachaServer/Dockerfile
         ports:
             - "3000:8080"
-        secrets:
-            - private_key
-            - public_key
         environment:
             - ASPNETCORE_ENVIRONMENT=Development
             - ConnectionStrings__DefaultConnection=Host=database;Port=5432;Database=${DB_NAME};Username=${DB_USER};Password=${DB_PASSWORD};
             - ConnectionStrings__Redis=redis:6379
-            - Jwt__Key=${JWT_KEY}
-            - Jwt__Issuer=${JWT_ISSUER}
-            - Jwt__Audience=${JWT_AUDIENCE}
-            - PRIVATE_KEY_PATH=/run/secrets/private_key
-            - PUBLIC_KEY_PATH=/run/secrets/public_key
+            - Firebase__ProjectId=${FIREBASE_PROJECT_ID}
         depends_on:
             database:
                 condition: service_healthy
@@ -52,9 +44,3 @@ services:
 volumes:
     db-data:
     redis-data:
-
-secrets:
-    private_key:
-        file: ./secrets/key.pem
-    public_key:
-        file: ./secrets/key_pub.pem

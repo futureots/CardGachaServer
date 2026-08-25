@@ -2,15 +2,16 @@
 
 public class User
 {
-    public string Id { get; set; } =  Guid.NewGuid().ToString();
+    /// <summary>
+    /// 고유 id pk(firebase에서는 fk)
+    /// </summary>
+    public required string FirebaseUid { get; set; }
+    public bool IsBanned { get; set; }
     
-    // 인게임에서 표현될 플레이어 닉네임
-    public string Name { get; set; }
+    public string Name  { get; set; } = string.Empty;
     
-    // 계정 종류
-    public string Provider { get; set; }
+    public DateTime CreatedAt { get; set; }
+    public DateTime LastActivityAt { get; set; }
     
-    // 계정 sub
-    public string ProviderId { get; set; }
     
 }

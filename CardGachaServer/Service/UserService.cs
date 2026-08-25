@@ -1,4 +1,5 @@
-﻿using CardGachaServer.Database;
+﻿using System.Security.Claims;
+using CardGachaServer.Database;
 using CardGachaServer.Model;
 using Microsoft.EntityFrameworkCore;
 
@@ -6,6 +7,21 @@ namespace CardGachaServer.Service;
 
 public interface IUserService
 {
+    /// <summary>
+    /// 초기 로그인 및 상태확인
+    /// </summary>
+    /// <param name="principal"></param>
+    /// <returns></returns>
+    public Task<User?> GetOrCreateUser(ClaimsPrincipal principal);
+    
+    /// <summary>
+    /// 이름 변경 서비스
+    /// </summary>
+    /// <param name="userId"></param>
+    /// <param name="userName"></param>
+    /// <returns></returns>
+    public Task<User?> UpdateUserNameAsync(string userId, string userName);
+    
     public Task<bool> AddOwnedCharacter(string userId,Character character);
     public Task<List<CharacterData>> GetUserCharacters(string userId);
 }
@@ -16,6 +32,35 @@ public class UserService : IUserService
     public UserService(UserDbContext userDbContext)
     {
         _userDbContext = userDbContext;
+    }
+
+    public async Task<User?> GetOrCreateUser(ClaimsPrincipal principal)
+    {
+        var userId = principal.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (userId == null) return null;
+        var user = await _userDbContext.Users.FirstOrDefaultAsync(u => u.FirebaseUid == userId);
+        if (user == null)
+        {
+            user = new User()
+            {
+                FirebaseUid = userId,
+                Name = DefaultNameGenerator.Generate(),
+                IsBanned = false,
+                CreatedAt = DateTime.UtcNow,
+            }; 
+            _userDbContext.Users.Add(user);
+        }
+        await _userDbContext.SaveChangesAsync();
+        return user;
+    }
+
+    public async Task<User?> UpdateUserNameAsync(string userId, string userName)
+    {
+        var user = await _userDbContext.Users.FirstOrDefaultAsync(u => u.FirebaseUid == userId);
+        if (user == null) return null;
+        user.Name = userName;
+        await _userDbContext.SaveChangesAsync();
+        return user;
     }
 
     public async Task<bool> AddOwnedCharacter(string userId, Character character)

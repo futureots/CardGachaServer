@@ -71,7 +71,7 @@ public class TestController : ControllerBase
             .ToListAsync();
         return Ok(result);
     }
-
+    [Authorize]
     [HttpPost("echo")]
     public Task<IActionResult> Echo([FromBody] EchoData data)
     {

@@ -4,7 +4,7 @@ public class OwnedCharacter
 {
     // 보유한 계정
     public string UserId { get; set; }
-    
+    public User? User { get; set; }
     // 보유한 캐릭터
     public string CharacterId { get; set; } = string.Empty;
 
